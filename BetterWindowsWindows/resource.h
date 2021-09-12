@@ -3,8 +3,6 @@
 // Used by BetterWindowsWindows.rc
 //
 #define IDD_DIALOG1                     101
-#define IDC_BUTTON1                     1001
-#define IDC_BUTTON2                     1005
 #define IDC_BUTTON4                     1006
 #define IDC_RICHEDIT21                  1007
 
