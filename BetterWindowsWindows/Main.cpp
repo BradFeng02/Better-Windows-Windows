@@ -1,8 +1,10 @@
-#include <iostream>
+﻿#include <iostream>
 #include <Windows.h>
 #include <thread>
 #include <list>
 #include <WinUser.h>
+
+#define RICHEDIT_CLASS		RICHEDIT_CLASSW
 using namespace std;
 
 struct Win {
