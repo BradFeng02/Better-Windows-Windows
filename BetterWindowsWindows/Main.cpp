@@ -56,7 +56,7 @@ void processWins() {
 			i = wins.erase(i);
 		}
 	}
-	
+
 }
 
 BOOL CALLBACK DlgProc(HWND hwndDlg, UINT message, WPARAM wParam, LPARAM lParam) {
@@ -78,8 +78,25 @@ BOOL CALLBACK DlgProc(HWND hwndDlg, UINT message, WPARAM wParam, LPARAM lParam) 
 		case IDNO: // reset name
 			EndDialog(hwndDlg, 2);
 			return true;
+		case IDHELP: // recreate window (move right in taskbar)
+			EndDialog(hwndDlg, 3);
+			return true;
 		case IDCANCEL:
+		case IDC_SPLIT1:
 			EndDialog(hwndDlg, 0);
+			return true;
+		}
+		return false;
+	case WM_NOTIFY:
+		if (((LPNMHDR)lParam)->code == BCN_DROPDOWN) {
+			NMBCDROPDOWN* pDropDown = (NMBCDROPDOWN*)lParam;
+			POINT pt;
+			pt.x = pDropDown->rcButton.left;
+			pt.y = pDropDown->rcButton.bottom;
+			ClientToScreen(pDropDown->hdr.hwndFrom, &pt);
+			HMENU hMenu = LoadMenu(NULL, MAKEINTRESOURCE(IDR_MENU1));
+			hMenu = GetSubMenu(hMenu, 0);
+			TrackPopupMenu(hMenu, TPM_LEFTALIGN | TPM_TOPALIGN, pt.x, pt.y, 0, hwndDlg, NULL);
 			return true;
 		}
 		return false;
@@ -121,7 +138,7 @@ int main() {
 						wins.emplace_back(w);
 					}
 				}
-					break;
+				break;
 				case 2: // reset name
 				{
 					auto i = find_if(wins.begin(), wins.end(), [&](Win w) {return w.hwnd == curWin; });
@@ -131,6 +148,14 @@ int main() {
 						wins.erase(i);
 					}
 				}
+				break;
+				case 3: // recreate window (move right in taskbar)
+					curWin = GetForegroundWindow();
+
+					if (IsWindow(curWin)) {
+						ShowWindow(curWin, SW_HIDE);
+						ShowWindow(curWin, SW_SHOW);
+					}
 					break;
 				}
 			}
