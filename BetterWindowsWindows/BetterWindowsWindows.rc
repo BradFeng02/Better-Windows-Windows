@@ -17,7 +17,7 @@
 
 #if !defined(AFX_RESOURCE_DLL) || defined(AFX_TARG_ENU)
 LANGUAGE LANG_ENGLISH, SUBLANG_ENGLISH_US
-#pragma code_page(1252)
+#pragma code_page(65001)
 
 #ifdef APSTUDIO_INVOKED
 /////////////////////////////////////////////////////////////////////////////
@@ -51,15 +51,15 @@ END
 //
 
 IDD_DIALOG1 DIALOGEX 0, 0, 406, 14
-STYLE DS_SYSMODAL | DS_SETFONT | DS_FIXEDSYS | DS_CENTER | WS_POPUP | WS_BORDER
+STYLE DS_SYSMODAL | DS_SETFONT | DS_CENTER | WS_POPUP | WS_BORDER
 EXSTYLE WS_EX_TOPMOST
-FONT 8, "MS Shell Dlg", 400, 0, 0x1
+FONT 9, "Segoe UI Emoji", 400, 0, 0x0
 BEGIN
-    DEFPUSHBUTTON   "OK",IDOK,298,0,36,14
-    PUSHBUTTON      "Cancel",IDCANCEL,334,0,36,14
-    PUSHBUTTON      "Reset",IDNO,370,0,36,14
+    DEFPUSHBUTTON   "OK",IDOK,294,0,40,14
     LTEXT           "New name:",IDC_STATIC,2,3,37,9
-    CONTROL         "",IDC_RICHEDIT21,"RichEdit20W",ES_AUTOHSCROLL | WS_TABSTOP,41,3,253,11
+    CONTROL         "",IDC_RICHEDIT21,"RichEdit20W",WS_TABSTOP | 0x80,41,3,249,11
+    CONTROL         "Cancel",IDC_SPLIT1,"Button",BS_SPLITBUTTON | WS_TABSTOP,334,0,51,14
+    PUSHBUTTON      "⏯",IDHELP,389,0,17,14
 END
 
 
@@ -89,6 +89,20 @@ END
 IDD_DIALOG1 AFX_DIALOG_LAYOUT
 BEGIN
     0
+END
+
+
+/////////////////////////////////////////////////////////////////////////////
+//
+// Menu
+//
+
+IDR_MENU1 MENU
+BEGIN
+    POPUP "Reset"
+    BEGIN
+        MENUITEM "Reset",                       IDNO
+    END
 END
 
 #endif    // English (United States) resources
