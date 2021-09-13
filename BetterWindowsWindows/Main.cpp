@@ -130,11 +130,15 @@ int main() {
 
 					if (i != wins.end()) { // existing window
 						i->NEW_name = titleBuf;
+						if (IsWindow(i->hwnd)) SetWindowText(i->hwnd, i->NEW_name.c_str()); // in case window closed during
 					}
 					else { // new window
 						Win w;
 						w.hwnd = curWin;
 						w.NEW_name = titleBuf;
+						GetWindowText(curWin, titleBuf, 255);
+						w.OG_name = titleBuf;
+						if (curWin) SetWindowText(curWin, w.NEW_name.c_str()); // in case window closed during
 						wins.emplace_back(w);
 					}
 				}
