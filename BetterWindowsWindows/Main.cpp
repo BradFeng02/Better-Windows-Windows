@@ -3,6 +3,9 @@
 #include <thread>
 #include <list>
 
+#include <fcntl.h>
+#include <io.h>
+
 #include <commctrl.h>
 #include <commoncontrols.h>
 #include <dpa_dsa.h>
@@ -41,19 +44,23 @@ HWND curWin;
 wchar_t titleBuf[255];
 list<Win> wins;
 
+bool debugChanged = true;
+const int debugNameMaxLen = 50;
+
 void processWins() {
 	auto i = wins.begin();
 	while (i != wins.end()) {
 		if (IsWindow(i->hwnd)) {
 			GetWindowText(i->hwnd, titleBuf, 255);
-			if (i->NEW_name.compare(titleBuf) != 0) { // name changed
+			if (i->NEW_name.compare(titleBuf) != 0) {  // name changed
 				i->OG_name = titleBuf;
 				SetWindowText(i->hwnd, i->NEW_name.c_str());
 			}
 			++i;
 		}
-		else { // window closed
+		else {  // window closed
 			i = wins.erase(i);
+			debugChanged = true;
 		}
 	}
 
@@ -75,10 +82,10 @@ BOOL CALLBACK DlgProc(HWND hwndDlg, UINT message, WPARAM wParam, LPARAM lParam) 
 			GetWindowText(GetDlgItem(hwndDlg, IDC_RICHEDIT21), titleBuf, 255);
 			EndDialog(hwndDlg, 1);
 			return true;
-		case IDNO: // reset name
+		case IDNO:  // reset name
 			EndDialog(hwndDlg, 2);
 			return true;
-		case IDHELP: // recreate window (move right in taskbar)
+		case IDHELP:  // recreate window (move right in taskbar)
 			EndDialog(hwndDlg, 3);
 			return true;
 		case IDCANCEL:
@@ -111,6 +118,8 @@ BOOL CALLBACK DlgProc(HWND hwndDlg, UINT message, WPARAM wParam, LPARAM lParam) 
 }
 
 int main() {
+	_setmode(_fileno(stdout), _O_U8TEXT);
+
 	LoadLibrary(L"RichEd20.dll");
 	SetThreadDpiAwarenessContext(DPI_AWARENESS_CONTEXT_PER_MONITOR_AWARE_V2);
 	RegisterHotKey(NULL, 1, MOD_NOREPEAT, VK_F7);
@@ -123,51 +132,77 @@ int main() {
 			if (msg.message == WM_HOTKEY) {
 				curWin = GetForegroundWindow();
 
+				debugChanged = true;
 				switch (DialogBox(NULL, MAKEINTRESOURCE(IDD_DIALOG1), curWin, DlgProc)) {
-				case 1: //ok
+				case 0:  // cancel
+					debugChanged = false;
+					break;
+				case 1:  // ok
 				{
 					auto i = find_if(wins.begin(), wins.end(), [&](Win w) {return w.hwnd == curWin; });
 
-					if (i != wins.end()) { // existing window
+					if (i != wins.end()) {  // existing window
 						i->NEW_name = titleBuf;
-						if (IsWindow(i->hwnd)) SetWindowText(i->hwnd, i->NEW_name.c_str()); // in case window closed during
+						if (IsWindow(i->hwnd)) SetWindowText(i->hwnd, i->NEW_name.c_str());  // in case window closed during
 					}
-					else { // new window
+					else {  // new window
 						Win w;
 						w.hwnd = curWin;
 						w.NEW_name = titleBuf;
 						GetWindowText(curWin, titleBuf, 255);
 						w.OG_name = titleBuf;
-						if (curWin) SetWindowText(curWin, w.NEW_name.c_str()); // in case window closed during
+						if (curWin) SetWindowText(curWin, w.NEW_name.c_str());  // in case window closed during
 						wins.emplace_back(w);
 					}
 				}
 				break;
-				case 2: // reset name
+				case 2:  // reset name
 				{
 					auto i = find_if(wins.begin(), wins.end(), [&](Win w) {return w.hwnd == curWin; });
 
-					if (i != wins.end()) { // exists
-						if (IsWindow(i->hwnd)) SetWindowText(i->hwnd, i->OG_name.c_str()); // in case window closed during
+					if (i != wins.end()) {  // exists
+						if (IsWindow(i->hwnd)) SetWindowText(i->hwnd, i->OG_name.c_str());  // in case window closed during
 						wins.erase(i);
 					}
 				}
 				break;
-				case 3: // recreate window (move right in taskbar)
+				case 3:  // recreate window (move right in taskbar)
 					curWin = GetForegroundWindow();
 
 					if (IsWindow(curWin)) {
 						ShowWindow(curWin, SW_HIDE);
 						ShowWindow(curWin, SW_SHOW);
 					}
+
+					debugChanged = false;
 					break;
 				}
 			}
 		}
 
-		if (++loopCnt >= 10) { // every 10 * 50 ms
+		if (++loopCnt >= 10) {  // every 10 * 50 ms
 			loopCnt = 0;
 			processWins();
+
+			// debug
+			if (debugChanged) {
+				debugChanged = false;
+				wcout << endl;
+				if (wins.size() > 0) {
+					wcout << L"better windows: [" << wins.size() << L"] active" << endl;
+					for (auto w : wins) {
+						if (w.NEW_name.length() <= debugNameMaxLen) {
+							wcout << L"  (" << w.hwnd << L") -> " << w.NEW_name << endl;
+						}
+						else {
+							wcout << L"  (" << w.hwnd << L") -> " << w.NEW_name.substr(0, debugNameMaxLen - 3) << L"..." << endl;
+						}
+					}
+				}
+				else {
+					wcout << L"no better windows active" << endl;
+				}
+			}
 		}
 		this_thread::sleep_for(rest);
 	}
