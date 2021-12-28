@@ -63,7 +63,6 @@ void processWins() {
 			debugChanged = true;
 		}
 	}
-
 }
 
 BOOL CALLBACK DlgProc(HWND hwndDlg, UINT message, WPARAM wParam, LPARAM lParam) {
@@ -117,11 +116,27 @@ BOOL CALLBACK DlgProc(HWND hwndDlg, UINT message, WPARAM wParam, LPARAM lParam) 
 	}
 }
 
-int main() {
-	_setmode(_fileno(stdout), _O_U8TEXT);
+BOOL CALLBACK onConsoleEvent(DWORD event) {
+	switch (event) {
+	case CTRL_C_EVENT:
+	case CTRL_CLOSE_EVENT:
+		// cleanup, restore names
+		auto i = wins.begin();
+		while (i != wins.end()) {
+			if (IsWindow(i->hwnd)) SetWindowText(i->hwnd, i->OG_name.c_str());  // in case window closed during
+			i = wins.erase(i);
+		}
+		break;
+	}
 
+	return TRUE;
+}
+
+int main() {
+	if (_setmode(_fileno(stdout), _O_U8TEXT) < 0) return 1;
 	LoadLibrary(L"RichEd20.dll");
 	SetThreadDpiAwarenessContext(DPI_AWARENESS_CONTEXT_PER_MONITOR_AWARE_V2);
+	if (!SetConsoleCtrlHandler(onConsoleEvent, TRUE)) return 2;
 	RegisterHotKey(NULL, 1, MOD_NOREPEAT, VK_F7);
 
 	auto rest = chrono::milliseconds(50);
