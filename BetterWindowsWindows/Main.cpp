@@ -129,7 +129,7 @@ BOOL CALLBACK onConsoleEvent(DWORD event) {
 		break;
 	}
 
-	return TRUE;
+	return FALSE;
 }
 
 int main() {
